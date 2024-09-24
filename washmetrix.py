@@ -45,7 +45,7 @@ import psycopg2
 import logging
 import pytz
 from datetime import datetime, timedelta
-from typing import Optional, Dict, Any, Union
+from typing import Optional, Dict, Any, Union, Tuple
 
 class WashMetrixKPIs:
 
@@ -155,7 +155,7 @@ class WashMetrixKPIs:
             else:
                 local_time = self.local_timezone.localize(local_time)
         utc_time = local_time.astimezone(pytz.utc)
-        print(utc_time.strftime('%Y-%m-%d %H:%M:%S'), utc_time.timestamp())
+        # print(utc_time.strftime('%Y-%m-%d %H:%M:%S'), utc_time.timestamp())
         return utc_time.strftime('%Y-%m-%d %H:%M:%S')
     
     def _process_location_timezones(self, location_timezones: Dict[str, str]) -> Dict[str, pytz.timezone]:
@@ -216,7 +216,50 @@ class WashMetrixKPIs:
     # ||         API FUNCTIONS             ||
     # =======================================
 
+    def total_sales(self, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None, location_key: Optional[str] = None) -> float:
+        """
+        Get total sales for a given date range.
 
+        Args:
+            start_date (datetime, optional): Start date and time for the query.
+            end_date (datetime, optional): End date and time for the query.
+            location_key (str, optional): Specific location to query. If None, queries all locations.
+
+        Returns:
+            float: Total sales in the specified date range and location.
+        """
+        if not start_date:
+            start_date = datetime.now(self.local_timezone).replace(hour=0, minute=0, second=0, microsecond=0)
+        if not end_date:
+            end_date = start_date + timedelta(days=1)
+
+        utc_start_date = self._convert_to_utc(start_date, location_key)
+        utc_end_date = self._convert_to_utc(end_date, location_key)
+
+        # Query for total sales
+        sales_query = f"""
+            SELECT COALESCE(SUM(net), 0) as total_sales
+            FROM {self.schema}.ticket
+            WHERE transaction_date_time BETWEEN %s AND %s
+            {f"AND location_key = %s" if location_key else ""}
+        """
+
+        try:
+            # Execute sales query
+            sales_params = [utc_start_date, utc_end_date]
+            if location_key:
+                sales_params.append(location_key)
+            sales_result = self.execute_query(sales_query, sales_params)
+            total_sales = sales_result[0][0] if sales_result else 0
+
+            return round(total_sales, 2)
+
+        except psycopg2.Error as e:
+            self.logger.error(f"Database error: {e}")
+            raise
+        except Exception as e:
+            self.logger.error(f"Unexpected error: {e}")
+            raise
 
     def total_cars(self, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None, location_key: Optional[str] = None) -> int:
         """
@@ -390,14 +433,8 @@ class WashMetrixKPIs:
         utc_start_date = self._convert_to_utc(start_date, location_key)
         utc_end_date = self._convert_to_utc(end_date, location_key)
 
-        # Query for total sales
-        sales_query = f"""
-            SELECT COALESCE(SUM(net), 0) as total_sales
-            FROM {self.schema}.ticket
-            WHERE transaction_date_time BETWEEN %s AND %s
-            {f"AND location_key = %s" if location_key else ""}
-        """
-
+        # Get total sales using the total_sales method
+        total_sales = self.total_sales(start_date, end_date, location_key)
 
         # Query for total labor cost
         labor_query = f"""
@@ -408,13 +445,6 @@ class WashMetrixKPIs:
         """
 
         try:
-            # Execute sales query
-            sales_params = [utc_start_date, utc_end_date]
-            if location_key:
-                sales_params.append(location_key)
-            sales_result = self.execute_query(sales_query, sales_params)
-            total_sales = sales_result[0][0] if sales_result else 0
-
             # Execute labor query
             labor_params = [utc_start_date, utc_end_date]
             if location_key:
@@ -423,10 +453,9 @@ class WashMetrixKPIs:
             total_labor_cost = labor_result[0][0] if labor_result else 0
 
             # Calculate labor percentage
-            print(labor_result[0][0], sales_result[0][0])
             if total_sales > 0:
                 labor_percentage = (total_labor_cost / total_sales) * 100
-                return round(labor_percentage, 4)
+                return round(labor_percentage, 2)
             else:
                 return 0.0
 
@@ -437,9 +466,9 @@ class WashMetrixKPIs:
             self.logger.error(f"Unexpected error: {e}")
             raise
 
-    def membership_income(self, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None, location_key: Optional[str] = None) -> Dict[str, float]:
+    def membership_redemptions(self, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None, location_key: Optional[str] = None) -> int:
         """
-        Get membership income and average membership AWP for a given date range.
+        Get the number of membership redemptions for a given date range.
 
         Args:
             start_date (datetime, optional): Start date and time for the query. Defaults to today at 00:00:00 in the local timezone.
@@ -447,7 +476,7 @@ class WashMetrixKPIs:
             location_key (str, optional): Specific location to query. If None, queries all locations.
 
         Returns:
-            Dict[str, float]: Dictionary containing total membership income and average membership AWP.
+            int: Number of membership redemptions.
         """
         if not start_date:
             start_date = datetime.now(self.local_timezone).replace(hour=0, minute=0, second=0, microsecond=0)
@@ -461,25 +490,92 @@ class WashMetrixKPIs:
         time_condition = self._generate_time_condition("ticket.transaction_date_time", utc_start_date, utc_end_date)
 
         query = f"""
-        WITH membership_data AS (
-            SELECT 
-                SUM(CASE WHEN ticket.transaction_type IN ('RECURRING_MEMBERSHIP_PAYMENT', 'MEMBERSHIP_REACTIVATION', 'NEW_MEMBERSHIP_SALE')
-                    THEN ticket.net ELSE 0 END) AS membership_income,
-                COUNT(CASE WHEN ticket.transaction_type = 'MEMBERSHIP_REDEMPTION' THEN 1 END) AS membership_redemptions
-            FROM dev.wash_u.ticket AS ticket
-            WHERE ({time_condition})
-            {location_filter}
-        )
         SELECT 
-            ROUND(COALESCE(membership_income, 0), 2) AS total_membership_income,
-            ROUND(COALESCE(membership_income / NULLIF(membership_redemptions, 0), 0), 2) AS membership_awp
-        FROM membership_data;
+            COUNT(CASE WHEN ticket.transaction_type = 'MEMBERSHIP_REDEMPTION' THEN 1 END) AS membership_redemptions
+        FROM dev.wash_u.ticket AS ticket
+        WHERE ({time_condition})
+        {location_filter};
         """
         result = self.execute_query(query)
-        return {
-            "total_membership_income": result[0][0] if result else 0,
-            "avg_membership_awp": result[0][1] if result else 0
-        }
+        return result[0][0] if result else 0
+
+    def membership_recharge_income_and_count(self, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None, location_key: Optional[str] = None) -> Tuple[float, int]:
+        """
+        Get membership income and count of tickets for a given date range.
+
+        Args:
+            start_date (datetime, optional): Start date and time for the query. Defaults to today at 00:00:00 in the local timezone.
+            end_date (datetime, optional): End date and time for the query. Defaults to start_date + 1 day.
+            location_key (str, optional): Specific location to query. If None, queries all locations.
+
+        Returns:
+            Tuple[float, int]: Total membership income and count of tickets.
+        """
+        if not start_date:
+            start_date = datetime.now(self.local_timezone).replace(hour=0, minute=0, second=0, microsecond=0)
+        if not end_date:
+            end_date = start_date + timedelta(days=1)
+
+        utc_start_date = self._convert_to_utc(start_date, location_key)
+        utc_end_date = self._convert_to_utc(end_date, location_key)
+
+        location_filter = f"AND ticket.location_key = '{location_key}'" if location_key else ""
+        time_condition = self._generate_time_condition("ticket.transaction_date_time", utc_start_date, utc_end_date)
+
+        query = f"""
+        SELECT 
+            COALESCE(SUM(CASE WHEN ticket.transaction_type IN ('RECURRING_MEMBERSHIP_PAYMENT', 'MEMBERSHIP_REACTIVATION', 'UPGRADE')
+                THEN ticket.net ELSE 0 END), 0) AS total_membership_income,
+            COUNT(*) AS ticket_count
+        FROM dev.wash_u.ticket AS ticket
+        WHERE ({time_condition})
+        AND ticket.transaction_type IN ('RECURRING_MEMBERSHIP_PAYMENT', 'MEMBERSHIP_REACTIVATION', 'UPGRADE')
+        {location_filter};
+        """
+        result = self.execute_query(query)
+        return (result[0][0], result[0][1]) if result else (0, 0)
+
+    def membership_awp(self, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None, location_key: Optional[str] = None) -> float:
+        """
+        Get average membership AWP for a given date range.
+
+        Args:
+            start_date (datetime, optional): Start date and time for the query. Defaults to today at 00:00:00 in the local timezone.
+            end_date (datetime, optional): End date and time for the query. Defaults to start_date + 1 day.
+            location_key (str, optional): Specific location to query. If None, queries all locations.
+
+        Returns:
+            float: Average membership AWP.
+        """
+
+        # Do not pass UTC times since they will be converted in the other functions
+        # pass like you would outside of the API.
+        redemptions = self.membership_redemptions(start_date, end_date, location_key)
+        income = self.membership_recharge_income_and_count(start_date, end_date, location_key)[0]
+        
+        if redemptions > 0:
+            return round(income / redemptions, 2)
+        else:
+            return 0
+        
+    def membership_average_sale_price(self, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None, location_key: Optional[str] = None) -> float:
+        """
+        Get the average membership sale price for a given date range.
+
+        Args:
+            start_date (datetime, optional): Start date and time for the query. Defaults to today at 00:00:00 in the local timezone.
+            end_date (datetime, optional): End date and time for the query. Defaults to start_date + 1 day.
+            location_key (str, optional): Specific location to query. If None, queries all locations.
+
+        Returns:
+            float: Average membership sale price.
+        """
+        total_income, ticket_count = self.membership_recharge_income_and_count(start_date, end_date, location_key)
+        
+        if ticket_count > 0:
+            return round(total_income / ticket_count, 2)
+        else:
+            return 0
 
     def churn_rate(self, year: int, month: int, location_key: Optional[str] = None) -> float:
         """
