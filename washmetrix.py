@@ -119,7 +119,7 @@ class WashMetrixKPIs:
                 password=self.password,
                 port=self.port
             )
-            self.logger.info("Connection to Redshift successful")
+            self.logger.info("Connected to Redshift. Pulling data...")
         except Exception as e:
             self.logger.error(f"Failed to connect to Redshift: {e}")
             raise
