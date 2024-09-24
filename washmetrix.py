@@ -589,14 +589,19 @@ class WashMetrixKPIs:
         Returns:
             float: Average churn rate for the specified period and location.
         """
-        location_filter = f"AND location_id = '{location_key}'" if location_key else ""
+        location_filter = f"AND location.key = '{location_key}'" if location_key else ""
 
         query = f"""
-        SELECT AVG(churn_percentage) / 100 AS avg_churn_rate
-        FROM dev.wash_u.mv_churn_growth_rate
-        WHERE year = {year} AND month = {month}
+        SELECT AVG(mvchurn.churn_percentage) / 100 AS avg_churn_rate
+        FROM dev.wash_u.mv_churn_growth_rate AS mvchurn
+        JOIN dev.wash_u.location AS location
+        ON mvchurn.location_id = location.id
+        WHERE mvchurn.year = {year} 
+        AND mvchurn.month = {month}
         {location_filter};
         """
+
+        print(query)
         result = self.execute_query(query)
         return result[0][0] if result else 0
 
@@ -612,14 +617,18 @@ class WashMetrixKPIs:
         Returns:
             float: Average growth rate for the specified period and location.
         """
-        location_filter = f"AND location_id = '{location_key}'" if location_key else ""
+        location_filter = f"AND location.key = '{location_key}'" if location_key else ""
 
         query = f"""
-        SELECT AVG(growth_percentage) / 100 AS avg_growth_rate
-        FROM dev.wash_u.mv_churn_growth_rate
-        WHERE year = {year} AND month = {month}
+        SELECT AVG(mvchurn.growth_percentage) / 100 AS avg_churn_rate
+        FROM dev.wash_u.mv_churn_growth_rate AS mvchurn
+        JOIN dev.wash_u.location AS location
+        ON mvchurn.location_id = location.id
+        WHERE mvchurn.year = {year} 
+        AND mvchurn.month = {month}
         {location_filter};
         """
+
         result = self.execute_query(query)
         return result[0][0] if result else 0
 
