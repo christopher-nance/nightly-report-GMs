@@ -326,7 +326,7 @@ class WashMetrixKPIs:
             SELECT SUM(ticket.net) AS total_sales,
                    COUNT(ticket.key) AS total_tickets
             FROM dev.wash_u.ticket AS ticket
-            WHERE ticket.transaction_type IN ('INDIVIDUAL_WASH', 'UNKNOWN')
+            WHERE ticket.transaction_type IN ('INDIVIDUAL_WASH') AND ticket.count_as_car = True
             AND ({time_condition})
             {location_filter}
         )
@@ -363,7 +363,7 @@ class WashMetrixKPIs:
         query = f"""
                 SELECT COUNT(ticket.key) AS total_tickets
                 FROM dev.wash_u.ticket AS ticket
-                WHERE ticket.transaction_type IN ('INDIVIDUAL_WASH', 'UNKNOWN') AND ticket.count_as_car = True
+                WHERE ticket.transaction_type IN ('INDIVIDUAL_WASH') AND ticket.count_as_car = True
                 AND ({time_condition})
                 {location_filter}
         """
@@ -401,7 +401,7 @@ class WashMetrixKPIs:
             SELECT SUM(ticket.net) AS total_sales,
                    COUNT(ticket.key) AS total_tickets
             FROM dev.wash_u.ticket AS ticket
-            WHERE ticket.transaction_type IN ('INDIVIDUAL_WASH', 'UNKNOWN') AND ticket.count_as_car = True
+            WHERE ticket.transaction_type IN ('INDIVIDUAL_WASH') AND ticket.count_as_car = True
             AND ({time_condition})
             {location_filter}
         )
@@ -524,14 +524,24 @@ class WashMetrixKPIs:
 
         query = f"""
         SELECT 
-            COALESCE(SUM(CASE WHEN ticket.transaction_type IN ('RECURRING_MEMBERSHIP_PAYMENT', 'MEMBERSHIP_REACTIVATION', 'UPGRADE')
+            COALESCE(SUM(CASE WHEN ticket.transaction_type IN ('RECURRING_MEMBERSHIP_PAYMENT', 'MEMBERSHIP_REACTIVATION', 'UPGRADE', 'UNKNOWN')
                 THEN ticket.net ELSE 0 END), 0) AS total_membership_income,
-            COUNT(*) AS ticket_count
+            (COUNT(CASE 
+                WHEN ticket.transaction_type IN ('RECURRING_MEMBERSHIP_PAYMENT', 'MEMBERSHIP_REACTIVATION', 'UPGRADE') 
+                THEN 1 
+                ELSE NULL 
+            END) 
+            - COUNT(CASE 
+                WHEN ticket.transaction_type = 'UNKNOWN' 
+                THEN 1 
+                ELSE NULL 
+            END)) AS ticket_count
         FROM dev.wash_u.ticket AS ticket
         WHERE ({time_condition})
-        AND ticket.transaction_type IN ('RECURRING_MEMBERSHIP_PAYMENT', 'MEMBERSHIP_REACTIVATION', 'UPGRADE')
+        AND ticket.transaction_type IN ('RECURRING_MEMBERSHIP_PAYMENT', 'MEMBERSHIP_REACTIVATION', 'UPGRADE', 'UNKNOWN')
         {location_filter};
         """
+
         result = self.execute_query(query)
         return (result[0][0], result[0][1]) if result else (0, 0)
     
@@ -560,12 +570,21 @@ class WashMetrixKPIs:
 
         query = f"""
         SELECT 
-            COALESCE(SUM(CASE WHEN ticket.transaction_type IN ('RECURRING_MEMBERSHIP_PAYMENT', 'MEMBERSHIP_REACTIVATION', 'UPGRADE', 'NEW_MEMBERSHIP_SALE')
+            COALESCE(SUM(CASE WHEN ticket.transaction_type IN ('RECURRING_MEMBERSHIP_PAYMENT', 'MEMBERSHIP_REACTIVATION', 'UPGRADE', 'UNKNOWN', 'NEW_MEMBERSHIP_SALE')
                 THEN ticket.net ELSE 0 END), 0) AS total_membership_income,
-            COUNT(*) AS ticket_count
+            (COUNT(CASE 
+                WHEN ticket.transaction_type IN ('RECURRING_MEMBERSHIP_PAYMENT', 'MEMBERSHIP_REACTIVATION', 'UPGRADE', 'NEW_MEMBERSHIP_SALE') 
+                THEN 1 
+                ELSE NULL 
+            END) 
+            - COUNT(CASE 
+                WHEN ticket.transaction_type = 'UNKNOWN' 
+                THEN 1 
+                ELSE NULL 
+            END)) AS ticket_count
         FROM dev.wash_u.ticket AS ticket
         WHERE ({time_condition})
-        AND ticket.transaction_type IN ('RECURRING_MEMBERSHIP_PAYMENT', 'MEMBERSHIP_REACTIVATION', 'UPGRADE', 'NEW_MEMBERSHIP_SALE')
+        AND ticket.transaction_type IN ('RECURRING_MEMBERSHIP_PAYMENT', 'MEMBERSHIP_REACTIVATION', 'UPGRADE', 'UNKNOWN', 'NEW_MEMBERSHIP_SALE')
         {location_filter};
         """
         result = self.execute_query(query)
