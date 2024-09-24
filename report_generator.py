@@ -33,6 +33,5 @@ start_date = today.replace(hour=0, minute=0, second=0, microsecond=0)  # Today a
 end_date = today.replace(hour=23, minute=59, second=59, microsecond=0)  # Today at 23:59:59
 
 # Call functions
-print(washmetrix.membership_recharge_income_and_count(start_date=start_date, end_date=end_date, location_key='269529698b913dfb25f26ceace416fac'))
-print(washmetrix.churn_rate(year=2024, month=8, location_key='269529698b913dfb25f26ceace416fac'))
-print(washmetrix.growth_rate(year=2024, month=8, location_key='269529698b913dfb25f26ceace416fac'))
+print(washmetrix.retail_sales(start_date=start_date, end_date=end_date, location_key='269529698b913dfb25f26ceace416fac'))
+print(washmetrix.retail_car_count(start_date=start_date, end_date=end_date, location_key='269529698b913dfb25f26ceace416fac'))

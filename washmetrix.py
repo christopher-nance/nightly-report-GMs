@@ -326,7 +326,7 @@ class WashMetrixKPIs:
             SELECT SUM(ticket.net) AS total_sales,
                    COUNT(ticket.key) AS total_tickets
             FROM dev.wash_u.ticket AS ticket
-            WHERE ticket.transaction_type = 'INDIVIDUAL_WASH'
+            WHERE ticket.transaction_type IN ('INDIVIDUAL_WASH', 'UNKNOWN')
             AND ({time_condition})
             {location_filter}
         )
@@ -363,7 +363,7 @@ class WashMetrixKPIs:
         query = f"""
                 SELECT COUNT(ticket.key) AS total_tickets
                 FROM dev.wash_u.ticket AS ticket
-                WHERE ticket.transaction_type = 'INDIVIDUAL_WASH'
+                WHERE ticket.transaction_type IN ('INDIVIDUAL_WASH', 'UNKNOWN') AND ticket.count_as_car = True
                 AND ({time_condition})
                 {location_filter}
         """
@@ -401,7 +401,7 @@ class WashMetrixKPIs:
             SELECT SUM(ticket.net) AS total_sales,
                    COUNT(ticket.key) AS total_tickets
             FROM dev.wash_u.ticket AS ticket
-            WHERE ticket.transaction_type = 'INDIVIDUAL_WASH'
+            WHERE ticket.transaction_type IN ('INDIVIDUAL_WASH', 'UNKNOWN') AND ticket.count_as_car = True
             AND ({time_condition})
             {location_filter}
         )
@@ -530,6 +530,42 @@ class WashMetrixKPIs:
         FROM dev.wash_u.ticket AS ticket
         WHERE ({time_condition})
         AND ticket.transaction_type IN ('RECURRING_MEMBERSHIP_PAYMENT', 'MEMBERSHIP_REACTIVATION', 'UPGRADE')
+        {location_filter};
+        """
+        result = self.execute_query(query)
+        return (result[0][0], result[0][1]) if result else (0, 0)
+    
+    def membership_income_and_count(self, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None, location_key: Optional[str] = None) -> Tuple[float, int]:
+        """
+        Get membership income and count of tickets for a given date range, including NEW members.
+
+        Args:
+            start_date (datetime, optional): Start date and time for the query. Defaults to today at 00:00:00 in the local timezone.
+            end_date (datetime, optional): End date and time for the query. Defaults to start_date + 1 day.
+            location_key (str, optional): Specific location to query. If None, queries all locations.
+
+        Returns:
+            Tuple[float, int]: Total membership income and count of tickets.
+        """
+        if not start_date:
+            start_date = datetime.now(self.local_timezone).replace(hour=0, minute=0, second=0, microsecond=0)
+        if not end_date:
+            end_date = start_date + timedelta(days=1)
+
+        utc_start_date = self._convert_to_utc(start_date, location_key)
+        utc_end_date = self._convert_to_utc(end_date, location_key)
+
+        location_filter = f"AND ticket.location_key = '{location_key}'" if location_key else ""
+        time_condition = self._generate_time_condition("ticket.transaction_date_time", utc_start_date, utc_end_date)
+
+        query = f"""
+        SELECT 
+            COALESCE(SUM(CASE WHEN ticket.transaction_type IN ('RECURRING_MEMBERSHIP_PAYMENT', 'MEMBERSHIP_REACTIVATION', 'UPGRADE', 'NEW_MEMBERSHIP_SALE')
+                THEN ticket.net ELSE 0 END), 0) AS total_membership_income,
+            COUNT(*) AS ticket_count
+        FROM dev.wash_u.ticket AS ticket
+        WHERE ({time_condition})
+        AND ticket.transaction_type IN ('RECURRING_MEMBERSHIP_PAYMENT', 'MEMBERSHIP_REACTIVATION', 'UPGRADE', 'NEW_MEMBERSHIP_SALE')
         {location_filter};
         """
         result = self.execute_query(query)
