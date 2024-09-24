@@ -600,8 +600,6 @@ class WashMetrixKPIs:
         AND mvchurn.month = {month}
         {location_filter};
         """
-
-        print(query)
         result = self.execute_query(query)
         return result[0][0] if result else 0
 
@@ -628,7 +626,6 @@ class WashMetrixKPIs:
         AND mvchurn.month = {month}
         {location_filter};
         """
-
         result = self.execute_query(query)
         return result[0][0] if result else 0
 
