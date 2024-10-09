@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+    <title>Carol Stream End-of-Day Report</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #003366;
+            color: #ffffff;
+            text-align: center;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .kpi-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+        .kpi-box {
+            width: 48%;
+            margin-bottom: 20px;
+            background-color: #e6f2ff;
+            border-radius: 5px;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+        .kpi-box h3 {
+            margin-top: 0;
+            color: #003366;
+        }
+        .key-metrics {
+            background-color: #003366;
+            color: #ffffff;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        .key-metrics h3 {
+            margin-top: 0;
+        }
+        .pace {
+            font-size: 0.9em;
+            color: #006600; /* Green color for positive pace */
+        }
+        .pace.negative {
+            color: #cc0000; /* Red color for negative pace */
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #003366;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2; /* Banding for rows */
+        }
+        .disclaimer {
+            width: 100%;
+            /*text-align: center;*/
+            color: #cccccc;
+            font-size: 12px;
+            margin-top: 10px;
+            font-style: italic;
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Carol Stream</h1>
+        <h2 style="margin-top: -3%;">End-of-Day Report</h2>
+        <p>Date: 2024-10-08</p>
+    </div>
+
+    <div class="kpi-container">
+        <div class="kpi-box">
+            <h3><i class="fas fa-dollar-sign"></i> Total Net Sales</h3>
+            <p>$3716.07</p>
+        </div>
+        <div class="kpi-box">
+            <h3><i class="fas fa-car"></i> Total Cars Washed</h3>
+            <p>624</p>
+        </div>
+        <div class="kpi-box">
+            <h3><i class="fas fa-chart-line"></i> Retail AWP</h3>
+            <p>$9.70</p>
+        </div>
+        <div class="kpi-box">
+            <h3><i class="fas fa-car-side"></i> Retail Cars Washed</h3>
+            <p>126</p>
+        </div>
+        <div class="kpi-box">
+            <h3><i class="fas fa-user-slash"></i> Memberships Cancelled</h3>
+            <p>5</p>
+        </div>
+        <div class="kpi-box">
+            <h3><i class="fas fa-user-plus"></i> New Memberships Sold</h3>
+            <p>9</p>
+        </div>
+    </div>
+    
+
+    <div class="key-metrics">
+        <h3>Key Metrics</h3>
+        <ul>
+            <li>Conversion Rate: 6.77%</li>
+            <li>Membership Redemption Rate: 79.65%</li>
+            <li>Memberships Redeemed: 497</li>
+            <li>Labor as % of Sales: 14.84%</li>
+        </ul>
+        <p class="disclaimer">Note: Labor rate accuracy depends on correct wage rates being entered into the system for each employee.</p>
+    </div>
+
+    <table border="0" cellpadding="0" cellspacing="0" style="width: 100%; border-collapse: collapse; font-family: Arial, sans-serif;">
+        <thead>
+            <tr>
+                <th style="border-bottom: 1px solid #ddd; padding: 8px;">Date</th>
+                <th style="border-bottom: 1px solid #ddd; padding: 8px;">Cars</th>
+                <th style="border-bottom: 1px solid #ddd; padding: 8px;">Cars - MTD</th>
+                <th style="border-bottom: 1px solid #ddd; padding: 8px;">Sales</th>
+                <th style="border-bottom: 1px solid #ddd; padding: 8px;">Sales - MTD</th>
+            </tr>
+        </thead>
+        <tbody>
+            
+            <tr>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">10-01</td>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">601</td>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">601</td>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">$3503.83</td>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">$3503.83</td>
+            </tr>
+            
+            <tr>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">10-02</td>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">618</td>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">1219</td>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">$4220.20</td>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">$7724.03</td>
+            </tr>
+            
+            <tr>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">10-03</td>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">692</td>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">1911</td>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">$4628.52</td>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">$12352.55</td>
+            </tr>
+            
+            <tr>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">10-04</td>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">665</td>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">2576</td>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">$4555.26</td>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">$16907.81</td>
+            </tr>
+            
+            <tr>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">10-05</td>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">923</td>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">3499</td>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">$5005.99</td>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">$21913.80</td>
+            </tr>
+            
+            <tr>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">10-06</td>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">785</td>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">4284</td>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">$5596.31</td>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">$27510.11</td>
+            </tr>
+            
+            <tr>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">10-07</td>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">667</td>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">4951</td>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">$3892.85</td>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">$31402.96</td>
+            </tr>
+            
+            <tr>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">10-08</td>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">624</td>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">5575</td>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">$3716.07</td>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">$35119.03</td>
+            </tr>
+            
+            <!-- Sparkline Row -->
+            <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #ddd;"></td>
+                <td style="padding: 8px; text-align: center;">
+                    <img src="data:image/png;base64,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" alt="Cars Sparkline" style="vertical-align: middle; max-width: 100px;">
+                </td>
+                <td style="padding: 8px; text-align: center;">
+                    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJsAAAAmCAYAAADTNeknAAAAOXRFWHRTb2Z0d2FyZQBNYXRwbG90bGliIHZlcnNpb24zLjkuMiwgaHR0cHM6Ly9tYXRwbG90bGliLm9yZy8hTgPZAAAACXBIWXMAAA9hAAAPYQGoP6dpAAAEZklEQVR4nO2ca2sTTRSAnza2FuulSiAoKGo1UItWbXNpGm+gouCH5oeKV/qlrQpJWhOtNlTxgjUiIhovpFYxsabrh8M62W7im/ZNsrnMA0to9qQZyMPMmbMz02EYhoFGUwc6nW6Apn3Y5HQDNE3Or1+QSkEiAckkfP0Kt2+XDNWyaSrHMGBxUYmVSMDjxyJcMdks9PXZPq5l05TnyxclVXHPtZZdu8Dvh0BAXnt6Sv47LZtGyOVgft7aay0u2uO6u+HECSVWIAD9/dDR8Z9foWVrRwwD0mmYmYH790WsVApWVuyxXq+SKhCAY8dg8+YNfa2WrR3I5+HRI5ErHpfXjx/tcW63kioQgJERGSKrhJatFclkYHZWifXwoQhXTFcXDA9DMKjk2r+/ouFwo2jZmp3VVXj2TIkVj8OrV/Y4txvGxiAUktfh4bKJfK3QsjUb379LAm+KNTsLS0v2uMFBEcuU69ChmvZalaBla3R+/hSpJidhelpmjIWCNWbLFhkGzZ4rGISdOx1p7r/QsjUaq6syM5yclCsWk7JEMXv3KrFCIRgagk2N/1M2fgvbgbdvlVzT0/D5s/X+nj1w4QKcPw9nzohsTYiWzQmWluDuXZFragpevrTe37oVzp5Vgg0MOJ5vVQMtWz1YWZHiqSlXMmnNu1wuKZyacgWDUppoMbRstSKdhlu3RLB792QWWYzXq+Q6dw527HCkmfVEy1YtDAMWFuDaNblSKet9t1vEMgXbt8+ZdjqIlu3/UChInev6dRHs9Wt1r7MTTp+Gy5dFsKEhea+N0bKtl3we7twRuW7ckEdDJj09cPEiRCJw5Yr0Zpq/aNkqYXkZJiZEsIkJ+dukr0/EGh+HS5egt9epVjY8WrZyZDJw86YINjVlXY26e7fIFYlIiaIFZ461QMtWTDqtEvx4XJJ+E69X5IpEwOdr+/xrI7SvbL9/w5MnarXEzAy8eWONGRkRucbHW6aw6iTtI1s2K4VVU6xEwl77crlkBmkK1qSPhRqV1pTN3AVU3Gs9fWodFgG2b4fRUfVA2++X9zQ1oTVky+Vgbs4q16dP9rj+futqiSNHpDfT1IXmlC2TEbFiMRFrbs6+WaO7W3IuU67RUfB4nGmvBmgG2cydQNGoyBWNwosX9jiPR61KDYXg5MkN7wLS1IbGk61QkGeMplixGLx/b48bHIRwWOQaG4MDB/RsscFxXrZcDh48UGLF4/DtmzWmq0uGxFOnlGBV3GKmqQ/1ly2bVflWNCqirT0rYts2GQrDYRHM55N19pqmprayFQrw/LksFjR3BC0s2EsQHo9IZV5HjzbFmnrN+qjeL2oY8O6dEiuZlM2xawunAIcPK7HC4YrPitA0NxuXLZuVIbBYrg8f7HG9vZJvmQeRhMO6BNGmVCZbPi8rT4vFKlV+cLnk4BG/X10DA7pwqgHKyfbjB1y9qsSany99ws3Bg9ZzuY4f14m8piwdJQ9wXl6WDRjFt9xua4/l8+mVqJp18QcjGKgW8QlYtAAAAABJRU5ErkJggg==" alt="MTD Cars Sparkline" style="vertical-align: middle; max-width: 100px;">
+                </td>
+                <td style="padding: 8px; text-align: center;">
+                    <img src="data:image/png;base64,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" alt="Sales Sparkline" style="vertical-align: middle; max-width: 100px;">
+                </td>
+                <td style="padding: 8px; text-align: center;">
+                    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJsAAAAmCAYAAADTNeknAAAAOXRFWHRTb2Z0d2FyZQBNYXRwbG90bGliIHZlcnNpb24zLjkuMiwgaHR0cHM6Ly9tYXRwbG90bGliLm9yZy8hTgPZAAAACXBIWXMAAA9hAAAPYQGoP6dpAAAFKElEQVR4nO2b3U/bVhiHf46BFAiFEKVgu46d0BqtmyqVAFLpB6xTN6kTu9xd/8LerVKriU0KXYc6Wpj2UVWQktpxHENKSJMBCU2Id2FhapxOtKPYSc4jWZFyXim/i0fvic8HZRiGAQLhFPC5HYDQPnS4HYDQ3JQLZejLOvQlHdlnWVQKFdydu9uwlshGODbvinUgVyFVcNRVihWc6T/j+J7IRmhI5U0F+rIplL6kI7uURWHNKRYABGNBMHEGTJwBG2fRcaaxVkQ2wqFYS9nDjvUesQaiA2DjLJhxUyxmjEH3YPexfofI1mZUd6vQl3VoixqyT7PIPsti6+VWw1pLrDgDdvzDxGoEka2FqdfqyD3PQVvUTLkWs8g9z8HYd652vSsWE2fAjDHoCfWcaB4iW4tgGAYKqYLVsbRFDfqyjlq55qjtY/vATXJgJ1mrY520WI0gsjUp2xvbllQHn+WtsqPO3+8HO86Cm+RMwSZYnOXOupCYyNYUGIaBzRebSD5MQnuiQXuqoagUHXV0F43hK8NgJw7lCl0MgfJRLqR2QmTzKPvVfaR/SWPl/gpW76863w4pIPxZ2JoOuQkOQ5eHQHfR7gQ+BkQ2D1EulPHy4Uus3l9F8mESe8U9a4zuohG9FYX4pQhukgMzxsB/1u9i2g+HyOYy+WQeKz+Y3Sv9OG17U+wJ90D6VoL0nYSR2yPoCnS5mPT/Q2Q7Zeq1OtQF1Zoe8yt52/i5L85BmpUgzUrgJjn46NY5K0FkOwUqxQrWflwzp8cHSdtbo6/DB3FGtAQLRoMuJv20ENk+AYZhIL+atwSTEzLqtbo13j3YjYt3LkKalTDyzUjDTetWhMh2Quy83sGrn19hbW4NqbkUSmrJNh4aDUGalTA6Owp+ioevo3Wmx+NCZPtIapUa0o/Tllzrv6/bxukuGpHrEVy4cwGjs6MISSGXknoHItsxMeoGNv7aQGouhdRcCsojBbWKfSto6PIQYrdjiN2OQbghoLOn06W03oTI9h+UtJIlV+qnFHZyO7bxABPAyNcjpmBfxRAYDriUtDkgsr3D2+23kBOyNTVuvti0jXf2dkKcFq3uFb4UBkV5YyuoGWhr2fb+2YP6qwp5Xkb6URraUw316uFbI+WjwI6zllz8Vd7T20Fep61kq7ypIP04DXlehjKvQF/WHWe7grGgJVf0VhTdwY8/LEiw09Ky7eZ3oTxSoMybz/of68CRc4MD0QGI0yKEaQHCtNDSi6pu01KybW9s2+TK/Z1z1ISkkCWWcFNAP9/vQtL2pKllK2klKPOKNS0e3WcEgPDnYQg3D+XqY/pcSEoAmky2UqYEOSGbciUU50UNylzrEqYFiNMiIjci6A33uhOW4MDTshXVotm5EjLkhOw4QEj5KDBjDCI3I5Zc5A+9d/GUbEW1aImlzCuN5YozEGdEiDMiItcjTXeAsJ1xVTabXAnFcZX/YJ1LmBFMua4RuZqZU5WtmD7SuY7KRVNg40SuVuWTyVav1bHx5wbUBdV6jt4IInK1FycmW7lQRuZJBuqCisxCBpnfMqjuVG01FG1Oiwf/ufhrPPx9RK524aNkMwwDW8ktW9d6/fy1o87f7wd/lcf5qfPgp3hwkxyRq405lmzVchXZZ1mra6kLKnY3dx11gxcGwV/jwU+ZT/hS2DMXZAnu01C26m4VyQdJq2vpy7rtNAQA0H4a3ARndS3+Ko/ec2QBlfB+Gsq2/3Yf976/Z9u0DgwHbF1r+MowOvyeWqYjeJx/AQOMU9VQmexqAAAAAElFTkSuQmCC" alt="MTD Sales Sparkline" style="vertical-align: middle; max-width: 100px;">
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    
+    
+
+    <p class="disclaimer" style="text-align: center;">This report is generated automatically. For any questions, please contact the WashU Carwash management team.</p>
+</body>
+</html>

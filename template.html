@@ -3,70 +3,178 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WashU Carwash KPI Report</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+    <title>{{ location_name }} End-of-Day Report</title>
     <style>
-        @media only screen and (max-width: 550px) {
-            .container {
-                width: 100% !important;
-            }
-            .kpi-box {
-                width: 100% !important;
-                display: block !important;
-            }
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
         }
+        .header {
+            background-color: #003366;
+            color: #ffffff;
+            text-align: center;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .kpi-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+        .kpi-box {
+            width: 48%;
+            margin-bottom: 20px;
+            background-color: #e6f2ff;
+            border-radius: 5px;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+        .kpi-box h3 {
+            margin-top: 0;
+            color: #003366;
+        }
+        .key-metrics {
+            background-color: #003366;
+            color: #ffffff;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        .key-metrics h3 {
+            margin-top: 0;
+        }
+        .pace {
+            font-size: 0.9em;
+            color: #006600; /* Green color for positive pace */
+        }
+        .pace.negative {
+            color: #cc0000; /* Red color for negative pace */
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #003366;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2; /* Banding for rows */
+        }
+        .disclaimer {
+            width: 100%;
+            /*text-align: center;*/
+            color: #cccccc;
+            font-size: 12px;
+            margin-top: 10px;
+            font-style: italic;
+        }
+        
     </style>
 </head>
-<body style="font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 0; background-color: #f4f4f4;">
-    <div class="container" style="max-width: 450px; margin: 0 auto; padding: 5px;">
-        <header style="background-color: #003366; color: #ffffff; text-align: center; padding: 20px;">
-            <h1 style="margin: 0;">WashU Carwash KPI Report</h1>
-        </header>
-        
-        <main style="background-color: #ffffff; padding: 20px;">
-            <p style="font-size: 16px;">Here are the key performance indicators for WashU Carwash Total:</p>
-            
-            <div style="display: flex; flex-wrap: wrap; justify-content: space-between;">
-                <div class="kpi-box" style="width: 48%; margin-bottom: 20px; background-color: #e6f2ff; border-radius: 5px; padding: 15px; box-sizing: border-box;">
-                    <h3 style="margin-top: 0; color: #003366;">Total Cars Washed</h3>
-                    <p style="font-size: 24px; font-weight: bold; margin: 0;">3,087</p>
-                </div>
-                <div class="kpi-box" style="width: 48%; margin-bottom: 20px; background-color: #e6f2ff; border-radius: 5px; padding: 15px; box-sizing: border-box;">
-                    <h3 style="margin-top: 0; color: #003366;">Total Net Sales</h3>
-                    <p style="font-size: 24px; font-weight: bold; margin: 0;">$25,373.76</p>
-                </div>
-                <div class="kpi-box" style="width: 48%; margin-bottom: 20px; background-color: #e6f2ff; border-radius: 5px; padding: 15px; box-sizing: border-box;">
-                    <h3 style="margin-top: 0; color: #003366;">Blended AWP</h3>
-                    <p style="font-size: 24px; font-weight: bold; margin: 0;">$8.22</p>
-                </div>
-                <div class="kpi-box" style="width: 48%; margin-bottom: 20px; background-color: #e6f2ff; border-radius: 5px; padding: 15px; box-sizing: border-box;">
-                    <h3 style="margin-top: 0; color: #003366;">Retail Washes Sold</h3>
-                    <p style="font-size: 24px; font-weight: bold; margin: 0;">965</p>
-                </div>
-                <div class="kpi-box" style="width: 48%; margin-bottom: 20px; background-color: #e6f2ff; border-radius: 5px; padding: 15px; box-sizing: border-box;">
-                    <h3 style="margin-top: 0; color: #003366;">Memberships Redeemed</h3>
-                    <p style="font-size: 24px; font-weight: bold; margin: 0;">2,065</p>
-                </div>
-                <div class="kpi-box" style="width: 48%; margin-bottom: 20px; background-color: #e6f2ff; border-radius: 5px; padding: 15px; box-sizing: border-box;">
-                    <h3 style="margin-top: 0; color: #003366;">New Memberships Sold</h3>
-                    <p style="font-size: 24px; font-weight: bold; margin: 0;">36</p>
-                </div>
-            </div>
-            
-            <div style="background-color: #003366; color: #ffffff; border-radius: 5px; padding: 15px; margin-top: 20px;">
-                <h3 style="margin-top: 0;">Key Metrics</h3>
-                <ul style="padding-left: 20px;">
-                    <li>Conversion Rate: 3.73%</li>
-                    <li>Memberships as % of Sales: 66.89%</li>
-                    <li>Labor as % of Sales: 23.37%</li>
-                    <li>Churn Rate: 7.67%</li>
-                    <li>Growth Rate: 14.60%</li>
-                </ul>
-            </div>
-        </main>
-        
-        <footer style="text-align: center; padding: 20px; color: #666;">
-            <p>This report is generated automatically. For any questions, please contact the WashU Carwash management team.</p>
-        </footer>
+<body>
+    <div class="header">
+        <h1>{{ location_name }}</h1>
+        <h2 style="margin-top: -3%;">End-of-Day Report</h2>
+        <p>Date: {{ report_date }}</p>
     </div>
+
+    <div class="kpi-container">
+        <div class="kpi-box">
+            <h3><i class="fas fa-dollar-sign"></i> Total Net Sales</h3>
+            <p>${{ total_sales }}</p>
+        </div>
+        <div class="kpi-box">
+            <h3><i class="fas fa-car"></i> Total Cars Washed</h3>
+            <p>{{ total_cars }}</p>
+        </div>
+        <div class="kpi-box">
+            <h3><i class="fas fa-chart-line"></i> Retail AWP</h3>
+            <p>${{ retail_awp }}</p>
+        </div>
+        <div class="kpi-box">
+            <h3><i class="fas fa-car-side"></i> Retail Cars Washed</h3>
+            <p>{{ retail_cars }}</p>
+        </div>
+        <div class="kpi-box">
+            <h3><i class="fas fa-user-slash"></i> Memberships Cancelled</h3>
+            <p>{{ cancelled_memberships }}</p>
+        </div>
+        <div class="kpi-box">
+            <h3><i class="fas fa-user-plus"></i> New Memberships Sold</h3>
+            <p>{{ new_memberships }}</p>
+        </div>
+    </div>
+    
+
+    <div class="key-metrics">
+        <h3>Key Metrics</h3>
+        <ul>
+            <li>Conversion Rate: {{ conversion_rate }}%</li>
+            <li>Membership Redemption Rate: {{ redemption_rate }}%</li>
+            <li>Memberships Redeemed: {{ redeemed_memberships }}</li>
+            <li>Labor as % of Sales: {{ labor_percentage }}%</li>
+        </ul>
+        <p class="disclaimer">Note: Labor rate accuracy depends on correct wage rates being entered into the system for each employee.</p>
+    </div>
+
+    <table border="0" cellpadding="0" cellspacing="0" style="width: 100%; border-collapse: collapse; font-family: Arial, sans-serif;">
+        <thead>
+            <tr>
+                <th style="border-bottom: 1px solid #ddd; padding: 8px;">Date</th>
+                <th style="border-bottom: 1px solid #ddd; padding: 8px;">Cars</th>
+                <th style="border-bottom: 1px solid #ddd; padding: 8px;">Cars - MTD</th>
+                <th style="border-bottom: 1px solid #ddd; padding: 8px;">Sales</th>
+                <th style="border-bottom: 1px solid #ddd; padding: 8px;">Sales - MTD</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for day in daily_data %}
+            <tr>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">{{ day.date }}</td>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">{{ day.cars }}</td>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">{{ day.mtd_total_cars }}</td>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">{{ day.sales }}</td>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">{{ day.mtd_total_sales }}</td>
+            </tr>
+            {% endfor %}
+            <!-- Sparkline Row -->
+            <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #ddd;"></td>
+                <td style="padding: 8px; text-align: center;">
+                    <img src="{{ cars_sparkline }}" alt="Cars Sparkline" style="vertical-align: middle; max-width: 100px;">
+                </td>
+                <td style="padding: 8px; text-align: center;">
+                    <img src="{{ mtd_cars_sparkline }}" alt="MTD Cars Sparkline" style="vertical-align: middle; max-width: 100px;">
+                </td>
+                <td style="padding: 8px; text-align: center;">
+                    <img src="{{ sales_sparkline }}" alt="Sales Sparkline" style="vertical-align: middle; max-width: 100px;">
+                </td>
+                <td style="padding: 8px; text-align: center;">
+                    <img src="{{ mtd_sales_sparkline }}" alt="MTD Sales Sparkline" style="vertical-align: middle; max-width: 100px;">
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    
+    
+
+    <p class="disclaimer" style="text-align: center;">This report is generated automatically. For any questions, please contact your manager.</p>
+    <p class="disclaimer" style="text-align: center;">Data is pulled from WashMetrix. For specific information on how a KPI is calculated please reach out to cnance@washucarwash.com.</p>
 </body>
 </html>

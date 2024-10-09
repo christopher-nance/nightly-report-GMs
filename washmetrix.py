@@ -44,6 +44,9 @@ Usage:
 import psycopg2
 import logging
 import pytz
+import pandas as pd
+import time
+
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any, Union, Tuple
 
@@ -252,7 +255,7 @@ class WashMetrixKPIs:
             sales_result = self.execute_query(sales_query, sales_params)
             total_sales = sales_result[0][0] if sales_result else 0
 
-            return round(total_sales, 2)
+            return round(total_sales, 4)
 
         except psycopg2.Error as e:
             self.logger.error(f"Database error: {e}")
@@ -297,6 +300,25 @@ class WashMetrixKPIs:
         """
         result = self.execute_query(query)
         return result[0][0] if result else 0
+    
+    def blended_awp(self, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None, location_key: Optional[str] = None) -> float:
+        if not start_date:
+            start_date = datetime.now(self.local_timezone).replace(hour=0, minute=0, second=0, microsecond=0)
+        if not end_date:
+            end_date = start_date + timedelta(days=1)
+
+        # Ensure start_date and end_date are datetime objects
+        start_date = pd.to_datetime(start_date).to_pydatetime()
+        end_date = pd.to_datetime(end_date).to_pydatetime()
+
+        # Do not pass UTC times since they will be converted in the other functions
+        redemptions = self.membership_redemptions(start_date, end_date, location_key)
+        income = self.membership_recharge_income_and_count(start_date, end_date, location_key)[0]
+        
+        if redemptions > 0:
+            return round(income / redemptions, 4)
+        else:
+            return 0
 
     def retail_sales(self, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None, location_key: Optional[str] = None) -> Dict[str, float]:
         """
@@ -331,7 +353,7 @@ class WashMetrixKPIs:
             {location_filter}
         )
         SELECT 
-            ROUND(COALESCE(total_sales, 0), 2)
+            ROUND(COALESCE(total_sales, 0), 4)
         FROM retail_sales;
         """
         result = self.execute_query(query)
@@ -406,7 +428,7 @@ class WashMetrixKPIs:
             {location_filter}
         )
         SELECT 
-            ROUND(COALESCE(total_sales / NULLIF(total_tickets, 0), 0), 2)
+            ROUND(COALESCE(total_sales / NULLIF(total_tickets, 0), 0), 4)
         FROM retail_sales;
         """
         result = self.execute_query(query)
@@ -454,8 +476,8 @@ class WashMetrixKPIs:
 
             # Calculate labor percentage
             if total_sales > 0:
-                labor_percentage = (total_labor_cost / total_sales) * 100
-                return round(labor_percentage, 2)
+                labor_percentage = (total_labor_cost / total_sales)
+                return round(labor_percentage, 4)
             else:
                 return 0.0
 
@@ -491,13 +513,82 @@ class WashMetrixKPIs:
 
         query = f"""
         SELECT 
-            COUNT(CASE WHEN ticket.transaction_type = 'MEMBERSHIP_REDEMPTION' THEN 1 END) AS membership_redemptions
+            COUNT(CASE WHEN ticket.transaction_type in ('MEMBERSHIP_REDEMPTION', 'NEW_MEMBERSHIP_SALE') THEN 1 END) AS membership_redemptions
         FROM dev.wash_u.ticket AS ticket
         WHERE ({time_condition})
         {location_filter};
         """
         result = self.execute_query(query)
         return result[0][0] if result else 0
+    
+    def new_memberships_sold(self, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None, location_key: Optional[str] = None) -> int:
+        """
+        Get the number of NEW membership sales for a given date range.
+
+        Args:
+            start_date (datetime, optional): Start date and time for the query. Defaults to today at 00:00:00 in the local timezone.
+            end_date (datetime, optional): End date and time for the query. Defaults to start_date + 1 day.
+            location_key (str, optional): Specific location to query. If None, queries all locations.
+
+        Returns:
+            int: Number of NEW membership sales.
+        """
+        if not start_date:
+            start_date = datetime.now(self.local_timezone).replace(hour=0, minute=0, second=0, microsecond=0)
+        if not end_date:
+            end_date = start_date + timedelta(days=1)
+
+        utc_start_date = self._convert_to_utc(start_date, location_key)
+        utc_end_date = self._convert_to_utc(end_date, location_key)
+
+        location_filter = f"AND ticket.location_key = '{location_key}'" if location_key else ""
+        time_condition = self._generate_time_condition("ticket.transaction_date_time", utc_start_date, utc_end_date)
+
+        query = f"""
+        SELECT 
+            COUNT(CASE WHEN ticket.transaction_type = 'NEW_MEMBERSHIP_SALE' THEN 1 END) AS membership_sales
+        FROM dev.wash_u.ticket AS ticket
+        WHERE ({time_condition})
+        {location_filter};
+        """
+        result = self.execute_query(query)
+        return result[0][0] if result else 0
+    
+    def memberships_cancelled(self, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None, location_key: Optional[str] = None) -> int:
+        """
+        Count total number of members who cancelled.
+
+        Args:
+            start_date (datetime, optional): Start date and time for the query. Defaults to today at 00:00:00 in the local timezone.
+            end_date (datetime, optional): End date and time for the query. Defaults to start_date + 1 day.
+            location_key (str, optional): Specific location to query. If None, queries all locations.
+
+        Returns:
+            int: Count of transactions with specific item keys.
+        """
+        if not start_date:
+            start_date = datetime.now(self.local_timezone).replace(hour=0, minute=0, second=0, microsecond=0)
+        if not end_date:
+            end_date = start_date + timedelta(days=1)
+
+        utc_start_date = self._convert_to_utc(start_date, location_key)
+        utc_end_date = self._convert_to_utc(end_date, location_key)
+
+        location_filter = f"AND location_key = '{location_key}'" if location_key else ""
+
+        query = f"""
+        SELECT COUNT(DISTINCT ticket_key) as transaction_count
+        FROM {self.schema}.transaction
+        WHERE transaction_date_time BETWEEN '{utc_start_date}' AND '{utc_end_date}'
+        AND service_key IN ('d84c6aad014a91c85a4ba342b742108d', '2a6cfb9c2ac42826b7ed56927b4a25b0', 'dcc3bcf78e7fc8d3271c386fcc333a1b')
+        {location_filter};
+        """
+        #print(query)
+        time.sleep(2)
+
+        result = self.execute_query(query)
+        return result[0][0] if result else 0
+
 
     def membership_recharge_income_and_count(self, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None, location_key: Optional[str] = None) -> Tuple[float, int]:
         """
@@ -609,11 +700,11 @@ class WashMetrixKPIs:
         income = self.membership_recharge_income_and_count(start_date, end_date, location_key)[0]
         
         if redemptions > 0:
-            return round(income / redemptions, 2)
+            return round(income / redemptions, 4)
         else:
             return 0
         
-    def membership_average_sale_price(self, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None, location_key: Optional[str] = None) -> float:
+    def membership_asp(self, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None, location_key: Optional[str] = None) -> float:
         """
         Get the average membership sale price for a given date range.
 
@@ -628,9 +719,71 @@ class WashMetrixKPIs:
         total_income, ticket_count = self.membership_recharge_income_and_count(start_date, end_date, location_key)
         
         if ticket_count > 0:
-            return round(total_income / ticket_count, 2)
+            return round(total_income / ticket_count, 4)
         else:
             return 0
+    
+    def membership_utilization(self, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None, location_key: Optional[str] = None) -> float:
+        """
+        Get the average membership sale price for a given date range.
+
+        Args:
+            start_date (datetime, optional): Start date and time for the query. Defaults to today at 00:00:00 in the local timezone.
+            end_date (datetime, optional): End date and time for the query. Defaults to start_date + 1 day.
+            location_key (str, optional): Specific location to query. If None, queries all locations.
+
+        Returns:
+            float: Average membership sale price.
+        """
+        total_income, ticket_count = self.membership_income_and_count(start_date, end_date, location_key)
+        redemptions = self.membership_redemptions(start_date, end_date, location_key)
+        
+        if ticket_count > 0:
+            return round(redemptions / ticket_count, 4)
+        else:
+            return 0
+    
+    def membership_redemption_rate(self, start_date: Optional[Union[datetime, str]] = None, end_date: Optional[Union[datetime, str]] = None, location_key: Optional[str] = None) -> float:
+        """
+        Calculate the percentage of membership redemptions relative to the total car count for a given location.
+        """
+        def parse_date(date_input):
+            if isinstance(date_input, str):
+                return pd.to_datetime(date_input).to_pydatetime()
+            elif isinstance(date_input, datetime):
+                return date_input
+            else:
+                raise ValueError(f"Unsupported date type: {type(date_input)}")
+
+        if not start_date:
+            start_date = datetime.now(self.local_timezone).replace(hour=0, minute=0, second=0, microsecond=0)
+        else:
+            start_date = parse_date(start_date)
+
+        if not end_date:
+            end_date = start_date + timedelta(days=1)
+        else:
+            end_date = parse_date(end_date)
+
+        # Ensure dates are timezone-aware
+        if start_date.tzinfo is None:
+            start_date = self.local_timezone.localize(start_date)
+        if end_date.tzinfo is None:
+            end_date = self.local_timezone.localize(end_date)
+
+        # Get total car count using the total_cars() function
+        total_cars = self.total_cars(start_date, end_date, location_key)
+
+        # Get the total number of membership redemptions
+        membership_redemptions = self.membership_redemptions(start_date, end_date, location_key)
+
+        # Avoid division by zero
+        if total_cars > 0:
+            redemption_rate = (membership_redemptions / total_cars)
+            return round(redemption_rate, 4)
+        else:
+            return 0.0
+
 
     def churn_rate(self, year: int, month: int, location_key: Optional[str] = None) -> float:
         """
@@ -655,6 +808,8 @@ class WashMetrixKPIs:
         AND mvchurn.month = {month}
         {location_filter};
         """
+        #print(query)
+        #time.sleep(2)
         result = self.execute_query(query)
         return result[0][0] if result else 0
 
@@ -683,6 +838,54 @@ class WashMetrixKPIs:
         """
         result = self.execute_query(query)
         return result[0][0] if result else 0
+    
+    def conversion_rate(self, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None, location_key: Optional[str] = None) -> float:
+        """
+        Calculate the conversion rate of retail customers to memberships for a given date range.
+
+        Args:
+            start_date (datetime, optional): Start date and time for the query. Defaults to today at 00:00:00 in the local timezone.
+            end_date (datetime, optional): End date and time for the query. Defaults to start_date + 1 day.
+            location_key (str, optional): Specific location to query. If None, queries all locations.
+
+        Returns:
+            float: Conversion rate as a percentage.
+        """
+        if not start_date:
+            start_date = datetime.now(self.local_timezone).replace(hour=0, minute=0, second=0, microsecond=0)
+        if not end_date:
+            end_date = start_date + timedelta(days=1)
+
+        # Ensure start_date and end_date are datetime objects
+        start_date = pd.to_datetime(start_date).to_pydatetime()
+        end_date = pd.to_datetime(end_date).to_pydatetime()
+
+        utc_start_date = self._convert_to_utc(start_date, location_key)
+        utc_end_date = self._convert_to_utc(end_date, location_key)
+
+        location_filter = f"AND ticket.location_key = '{location_key}'" if location_key else ""
+        time_condition = self._generate_time_condition("ticket.transaction_date_time", utc_start_date, utc_end_date)
+
+        # Query to get total retail cars + new membership sales
+        query = f"""
+                    SELECT COUNT(ticket.key) AS total_tickets
+                    FROM dev.wash_u.ticket AS ticket
+                    WHERE ticket.transaction_type IN ('INDIVIDUAL_WASH', 'NEW_MEMBERSHIP_SALE', 'DISCOUNT') 
+                    AND ticket.count_as_car = True
+                    AND ({time_condition})
+                    {location_filter}
+                """
+        total_customers = self.execute_query(query)[0][0] if self.execute_query(query) else 0
+
+        # Get the number of new memberships sold
+        new_memberships = self.new_memberships_sold(start_date, end_date, location_key)
+
+        # Avoid division by zero
+        if total_customers > 0:
+            conversion_rate = (new_memberships / total_customers)
+            return round(conversion_rate, 4)
+        else:
+            return 0.0
 
     def close(self):
         """Closes the connection to the database."""
