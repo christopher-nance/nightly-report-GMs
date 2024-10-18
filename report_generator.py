@@ -1,3 +1,5 @@
+print("Connecting to Redshift and Spawning Threads...")
+
 import base64
 import os
 import threading
@@ -10,6 +12,8 @@ import pytz
 import washmetrix
 from jinja2 import Environment, FileSystemLoader
 import json
+from colorama import init, Fore, Style
+init()
 
 # Set up logging
 import logging
@@ -152,11 +156,11 @@ def get_daily_and_mtd_data(location_id, start_of_month, today):
 
     return daily_data
 
-def generate_kpi_report(location_name, template_file):
+def generate_kpi_report(location_name, template_file_path):
     logger.info(f"Starting KPI report generation for {location_name}")
     try:
         # Set up dates
-        today = datetime.now(pytz.timezone('America/Chicago')) - timedelta(days=1)
+        today = datetime.now(pytz.timezone('America/Chicago'))
         start_of_month = today.replace(day=1)
         start_of_yesterday = today.replace(hour=0, minute=0, second=0)
         end_of_yesterday = today.replace(hour=23, minute=59, second=59)
@@ -187,7 +191,7 @@ def generate_kpi_report(location_name, template_file):
         logger.debug("KPI data fetched successfully")
 
         # Get daily and MTD data for the table
-        logger.info("Fetching daily and MTD data")
+        print(f"{Fore.CYAN}[INFO] {Fore.GREEN}Fetching daily and MTD data for {Fore.YELLOW}{location_name}{Fore.GREEN}...{Style.RESET_ALL}")
         daily_data = get_daily_and_mtd_data(location_id, start_of_month, today)
         logger.debug(f"Daily data entries: {len(daily_data)}")
 
@@ -229,12 +233,12 @@ def generate_kpi_report(location_name, template_file):
             'mtd_sales_sparkline': mtd_sales_sparkline,
         }
         logger.debug("Context prepared successfully")
-        print(json.dumps(context, indent=4))
+        #print(json.dumps(context, indent=4))
 
         # Set up Jinja2 environment and render the template
         logger.info("Rendering Jinja2 template")
-        env = Environment(loader=FileSystemLoader('.'))
-        template = env.get_template(template_file)
+        env = Environment(loader=FileSystemLoader(os.path.dirname(template_file_path)))
+        template = env.get_template(os.path.basename(template_file_path))
         rendered_report = template.render(context)
         logger.info("Template rendered successfully")
 
@@ -251,42 +255,73 @@ import base64
 import time
 def process_location(location):
     location_name = location
-    template_file = "template.html"
+    template_file_path = r"C:\Users\washu\Chris\Production\nightly-report-GMs\template.html"
 
-    print(f"Generating report for {location}...")
+    print(f"{Fore.CYAN}[INFO] {Fore.GREEN}New Thread Created for {Fore.YELLOW}{location}{Fore.GREEN}...{Style.RESET_ALL}")
 
-    report = generate_kpi_report(location_name, template_file)
+    report = generate_kpi_report(location_name, template_file_path)
 
-    def send_file_to_power_automate(report, url):
-        # Prepare the payload
-        payload = {
-            'emailContent': report,
-            'subject': f"{location_name} KPI Report {datetime.now().strftime('%Y-%m-%d')}",
-            'location': location,
-            'generalManagerEmail': location_managers[location]
-        }
+    def is_past_830pm(timezone_str):
+        location_tz = pytz.timezone(timezone_str)
+        current_time = datetime.now(location_tz)
+        return current_time.hour >= 20 and current_time.minute >= 30
 
-        # Send the POST request
-        response = requests.post(url, json=payload)
+    def send_file_to_power_automate(report, url, location):
+        location_id = location_names.get(location)
+        if not location_id:
+            print(f"Unknown location: {location}")
+            return
 
-        # Print the response from the server
-        print(f"{location}: Status Code - {response.status_code}")
-        print(f"{location}: Response - {response.text}")
+        timezone_str = location_timezones.get(location_id)
+        if not timezone_str:
+            print(f"No timezone found for location: {location}")
+            return
+
+        timeout = 0
+        while is_past_830pm(timezone_str) == True:
+            print(f"Not sending file for {location}. {location}'s Time: {datetime.now(pytz.timezone(timezone_str))}")
+            print(f"[ATTEMPT(S): {timeout+1}] Waiting an hour before trying again. Do not close this window or the report will not be sent...")
+            timeout += 1
+            if timeout > 5:
+                logger.error(f"Unable to send out a report for the location: {location}. We waited 5 hours and still did not meet the time condition to send the report.")
+                break
+            time.sleep(10)
+
+        if timeout <= 5:
+            # Prepare the payload
+            payload = {
+                'emailContent': report,
+                'subject': f"{location} End of Day Report: {datetime.now().strftime('%Y-%m-%d')}",
+                'location': location,
+                'generalManagerEmail': location_managers.get(location, "No manager email found")
+            }
+
+            logger.debug(f"Sending out a report for {location}.")
+
+            # Send the POST request
+            response = requests.post(url, json=payload)
+
+            # Print the response from the server
+            print(f"{location}: Status Code - {response.status_code}")
+            print(f"{location}: Response - {response.text}")
 
     # Example of how to call send_file_to_power_automate
-    # Uncomment the following line when ready to use
-    send_file_to_power_automate(report, "https://prod-148.westus.logic.azure.com:443/workflows/b8fc45168e654c988a50c8560a77fc4f/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=JALTLF2jAkgSFe5Zujplz2coX5Vt_avUuVqoEqlp_8Y")
+    power_automate_url = "https://prod-148.westus.logic.azure.com:443/workflows/b8fc45168e654c988a50c8560a77fc4f/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=JALTLF2jAkgSFe5Zujplz2coX5Vt_avUuVqoEqlp_8Y"
+    send_file_to_power_automate(report, power_automate_url, location)
+        
 
     # Save the report to an HTML file
     output_file = f"reports/{location_name}/{location_name}_KPI_Report_{datetime.now().strftime('%Y-%m-%d')}.html"
-
+    logger.debug("Saving file to reports folder...")
     # Ensure the 'reports' directory exists
     os.makedirs(f'reports/{location_name}', exist_ok=True)
 
     with open(output_file, 'w', encoding='utf-8') as file:
         file.write(report)
 
-    print(f"Report saved to: {output_file}")
+    logger.debug(f"Report saved to: {output_file}")
+
+washmetrix_api.total_cars(start_date=datetime.today(), end_date=datetime.today(), location_key="269529698b913dfb25f26ceace416fac") # Init the logger for the API so log is clean for this application.
 
 # Create and start threads for each location
 threads = []
@@ -296,10 +331,13 @@ for location in location_names:
     time.sleep(3)
     thread.start()
 
+time.sleep(1)
+print('-'*100)
+
 # Wait for all threads to complete
 for thread in threads:
     thread.join()
 
-print("All reports generated and saved.")
-    
+print("All reports generated, sent and saved.")
+time.sleep(10)
 #print(f"KPI report for {location_name} has been generated and saved as {output_file}")
