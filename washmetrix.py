@@ -1,6 +1,6 @@
 """
 WashMetrix Redshift API
-Version 0.6
+Version 0.6.1
 Author: Chris Nance for WashU Carwash
 
 This API standardizes the way KPIs are pulled via SQL for reports from a Redshift database.
@@ -295,7 +295,7 @@ class WashMetrixKPIs:
             WHERE ({time_condition})
             {location_filter}
         )
-        SELECT COUNT(CASE WHEN ticket_data.count_as_car = TRUE THEN 1 END) AS total_cars_washed
+        SELECT COUNT(CASE WHEN ticket_data.count_as_car = TRUE AND ticket_data.transaction_type in ('NEW_MEMBERSHIP_SALE', 'MEMBERSHIP_REDEMPTION', 'PREPAID_BOOK_REDEMPTION', 'REWASH', 'INDIVIDUAL_WASH', 'DISCOUNT') THEN 1 END) AS total_cars_washed
         FROM ticket_data;
         """
         result = self.execute_query(query)
@@ -385,7 +385,7 @@ class WashMetrixKPIs:
         query = f"""
                 SELECT COUNT(ticket.key) AS total_tickets
                 FROM dev.wash_u.ticket AS ticket
-                WHERE ticket.transaction_type IN ('INDIVIDUAL_WASH') AND ticket.count_as_car = True
+                WHERE ticket.transaction_type IN ('INDIVIDUAL_WASH', 'PREPAID_BOOK_REDEMPTION') AND ticket.count_as_car = True
                 AND ({time_condition})
                 {location_filter}
         """
@@ -513,7 +513,7 @@ class WashMetrixKPIs:
 
         query = f"""
         SELECT 
-            COUNT(CASE WHEN ticket.transaction_type in ('MEMBERSHIP_REDEMPTION', 'NEW_MEMBERSHIP_SALE') THEN 1 END) AS membership_redemptions
+            COUNT(CASE WHEN ticket.transaction_type in ('MEMBERSHIP_REDEMPTION', 'NEW_MEMBERSHIP_SALE') AND ticket.count_as_car = TRUE THEN 1 END) AS membership_redemptions
         FROM dev.wash_u.ticket AS ticket
         WHERE ({time_condition})
         {location_filter};
