@@ -131,6 +131,7 @@
             <li>Labor as % of Sales: {{ labor_percentage }}%</li>
         </ul>
         <p class="disclaimer">Note: Labor rate accuracy depends on correct wage rates being entered into the system for each employee.</p>
+        <p class="disclaimer">Note: Conversion Rate is the total number of new memberships sold divided by total number of "Individual Washes" (e.g., a customer who purchased a single wash at retail price). This <strong>excludes</strong> all sales where the net total was $0 such as membership redemptions, gift card redemptions, free washes, etc.</p>
     </div>
 
     <table border="0" cellpadding="0" cellspacing="0" style="width: 100%; border-collapse: collapse; font-family: Arial, sans-serif;">
@@ -141,6 +142,8 @@
                 <th style="border-bottom: 1px solid #ddd; padding: 8px;">Cars - MTD</th>
                 <th style="border-bottom: 1px solid #ddd; padding: 8px;">Sales</th>
                 <th style="border-bottom: 1px solid #ddd; padding: 8px;">Sales - MTD</th>
+                <th style="border-bottom: 1px solid #ddd; padding: 8px;">Conversion Rate</th>
+                <th style="border-bottom: 1px solid #ddd; padding: 8px;">Conversion Rate - MTD</th>
             </tr>
         </thead>
         <tbody>
@@ -151,6 +154,8 @@
                 <td style="border-bottom: 1px solid #ddd; padding: 8px;">{{ day.mtd_total_cars }}</td>
                 <td style="border-bottom: 1px solid #ddd; padding: 8px;">{{ day.sales }}</td>
                 <td style="border-bottom: 1px solid #ddd; padding: 8px;">{{ day.mtd_total_sales }}</td>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">{{ day.conversion_rate }}</td>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px;">{{ day.mtd_conversion_rate }}</td>
             </tr>
             {% endfor %}
             <!-- Sparkline Row -->
@@ -167,6 +172,12 @@
                 </td>
                 <td style="padding: 8px; text-align: center;">
                     <img src="{{ mtd_sales_sparkline }}" alt="MTD Sales Sparkline" style="vertical-align: middle; max-width: 100px;">
+                </td>
+                <td style="padding: 8px; text-align: center;">
+                    <img src="{{ conversion_sparkline }}" alt="Conversion Sparkline" style="vertical-align: middle; max-width: 100px;">
+                </td>
+                <td style="padding: 8px; text-align: center;">
+                    <img src="{{ mtd_conversion_sparkline }}" alt="MTD Conversion Sparkline" style="vertical-align: middle; max-width: 100px;">
                 </td>
             </tr>
         </tbody>

@@ -7,6 +7,7 @@ from io import BytesIO
 import matplotlib
 matplotlib.use('Agg')  # Use the 'Agg' backend which is thread-safe
 import matplotlib.pyplot as plt
+import statistics
 from datetime import datetime, timedelta
 import pytz
 import washmetrix
@@ -33,6 +34,8 @@ location_timezones = {
     '39584e8cd2a8e19da2c9406faac47c2e': 'America/Chicago',  # Joliet
     '220e853565de0c739bb3da29e512ed18': 'America/Chicago',  # Naperville (NAPER)
     '8a656bc1f58397ff7e026a3076411420': 'America/Chicago',  # Evergreen
+    '959558c4617dd2911a33de89489ed6b1': 'America/Chicago',  # Niles
+
     '5203385e07d8589c1b5d07da8865e015': 'America/Los_Angeles',  # Fiesta (FIESTA)
     'cf2257e6113a6298f68113a16929cad8': 'America/Los_Angeles',  # Centennial (CENT)
 }
@@ -49,6 +52,8 @@ location_names = {
     'Evergreen Park':   '8a656bc1f58397ff7e026a3076411420',
     'Fiesta':           '5203385e07d8589c1b5d07da8865e015',
     'Centennial':       'cf2257e6113a6298f68113a16929cad8',
+    'Niles':            '959558c4617dd2911a33de89489ed6b1',
+
 }
 
 location_managers = {
@@ -58,11 +63,12 @@ location_managers = {
     'Carol Stream':     'KVega@washucarwash.com',
     'Des Plaines':      'moustafa@washucarwash.com',
     'Berwyn':           'angelica@washucarwash.com',
-    'Joliet':           'GThompson@washucarwash.com',
-    'Naperville':       'ahasenjaeger@washucarwash.com',
+    'Joliet':           'JNeedham@washucarwash.com',
+    'Naperville':       'SSieg@washucarwash.com',
     'Evergreen Park':   'jjenkins@washucarwash.com',
     'Fiesta':           'antoniovega@washucarwash.com',
     'Centennial':       'ysneath@washucarwash.com',
+    'Niles':            'ahasenjaeger@washucarwash.com'
 }
 
 washmetrix_api = washmetrix.WashMetrixKPIs(pytz.timezone('America/Chicago'), location_timezones)
@@ -77,7 +83,7 @@ def get_matplotlib_fig():
 
 def generate_sparkline(data, color='blue'):
     # Convert data to float, removing '$' and ',' if present
-    numeric_data = [float(x.replace('$', '').replace(',', '')) if isinstance(x, str) else float(x) for x in data]
+    numeric_data = [float(x.replace('$', '').replace(',', '').replace('%', '')) if isinstance(x, str) else float(x) for x in data]
     
     fig, ax = get_matplotlib_fig()
     ax.clear()  # Clear previous plot
@@ -128,6 +134,7 @@ def get_daily_and_mtd_data(location_id, start_of_month, today):
 
     # Loop through each day from the start of the month to today
     current_date = start_of_month
+    conversion_rates = []
     while current_date <= today:
         # Set time range for the current day
         start_day = current_date.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -136,18 +143,22 @@ def get_daily_and_mtd_data(location_id, start_of_month, today):
         # Fetch daily totals
         daily_cars = washmetrix_api.total_cars(start_date=start_day, end_date=end_day, location_key=location_id)
         daily_sales = washmetrix_api.total_sales(start_date=start_day, end_date=end_day, location_key=location_id)
+        conversion_rate = washmetrix_api.conversion_rate(start_date=start_day, end_date=end_day, location_key=location_id)*100
 
         # Update MTD totals
         mtd_total_cars += daily_cars
         mtd_total_sales += daily_sales
+        conversion_rates.append(conversion_rate)
 
         # Store daily data with cumulative MTD totals
         daily_data.append({
             'date': current_date.strftime('%m-%d'),
             'cars': f"{int(daily_cars):,}",
             'sales': f"${daily_sales:,.2f}",
+            'conversion_rate': f"{conversion_rate:,.2f}%",
             'mtd_total_cars': f"{int(mtd_total_cars):,}",
-            'mtd_total_sales': f"${mtd_total_sales:,.2f}"
+            'mtd_total_sales': f"${mtd_total_sales:,.2f}",
+            'mtd_conversion_rate': f"{statistics.mean(conversion_rates):,.2f}%"
         })
         # Move to the next day
         current_date += timedelta(days=1)
@@ -230,8 +241,8 @@ def generate_kpi_report(location_name, template_file_path):
         return results
 
     def generate_sparklines(daily_data):
-        metrics = ['cars', 'sales', 'mtd_total_cars', 'mtd_total_sales']
-        colors = ['blue', 'green', 'red', 'purple']
+        metrics = ['cars', 'sales', 'conversion_rate', 'mtd_total_cars', 'mtd_total_sales', 'mtd_conversion_rate']
+        colors = ['blue', 'green', 'red', 'purple', 'yellow', 'orange']
         
         return {
             f"{metric}_sparkline": generate_sparkline([day[metric] for day in daily_data], color)
@@ -368,7 +379,7 @@ def process_location(location):
 
     # Example of how to call send_file_to_power_automate
     power_automate_url = "https://prod-148.westus.logic.azure.com:443/workflows/b8fc45168e654c988a50c8560a77fc4f/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=JALTLF2jAkgSFe5Zujplz2coX5Vt_avUuVqoEqlp_8Y"
-    #send_file_to_power_automate(report, power_automate_url, location)
+    send_file_to_power_automate(report, power_automate_url, location)
         
 
     # Save the report to an HTML file

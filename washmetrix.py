@@ -393,6 +393,41 @@ class WashMetrixKPIs:
 
         # Return only total_tickets
         return result[0][0] if result else 0
+    
+    def retail_car_count_rinsed(self, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None, location_key: Optional[str] = None) -> Dict[str, float]:
+        """
+        Get retail sales and average retail AWP for a given date range.
+
+        Args:
+            start_date (datetime, optional): Start date and time for the query. Defaults to today at 00:00:00 in the local timezone.
+            end_date (datetime, optional): End date and time for the query. Defaults to start_date + 1 day.
+            location_key (str, optional): Specific location to query. If None, queries all locations.
+
+        Returns:
+            Dict[str, float]: Dictionary containing total retail sales and average retail AWP.
+        """
+        if not start_date:
+            start_date = datetime.now(self.local_timezone).replace(hour=0, minute=0, second=0, microsecond=0)
+        if not end_date:
+            end_date = start_date + timedelta(days=1)
+
+        utc_start_date = self._convert_to_utc(start_date, location_key)
+        utc_end_date = self._convert_to_utc(end_date, location_key)
+
+        location_filter = f"AND ticket.location_key = '{location_key}'" if location_key else ""
+        time_condition = self._generate_time_condition("ticket.transaction_date_time", utc_start_date, utc_end_date)
+
+        query = f"""
+                SELECT COUNT(ticket.key) AS total_tickets
+                FROM dev.wash_u.ticket AS ticket
+                WHERE ticket.transaction_type NOT IN ('NEW_MEMBERSHIP_SALE') AND ticket.count_as_car = True AND ticket.net > 0
+                AND ({time_condition})
+                {location_filter}
+        """
+        result = self.execute_query(query)
+
+        # Return only total_tickets
+        return result[0][0] if result else 0
 
     
     def retail_awp(self, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None, location_key: Optional[str] = None) -> Dict[str, float]:
@@ -860,29 +895,17 @@ class WashMetrixKPIs:
         start_date = pd.to_datetime(start_date).to_pydatetime()
         end_date = pd.to_datetime(end_date).to_pydatetime()
 
-        utc_start_date = self._convert_to_utc(start_date, location_key)
-        utc_end_date = self._convert_to_utc(end_date, location_key)
-
-        location_filter = f"AND ticket.location_key = '{location_key}'" if location_key else ""
-        time_condition = self._generate_time_condition("ticket.transaction_date_time", utc_start_date, utc_end_date)
-
         # Query to get total retail cars + new membership sales
-        query = f"""
-                    SELECT COUNT(ticket.key) AS total_tickets
-                    FROM dev.wash_u.ticket AS ticket
-                    WHERE ticket.transaction_type IN ('INDIVIDUAL_WASH', 'NEW_MEMBERSHIP_SALE', 'DISCOUNT') 
-                    AND ticket.count_as_car = True
-                    AND ({time_condition})
-                    {location_filter}
-                """
-        total_customers = self.execute_query(query)[0][0] if self.execute_query(query) else 0
+        eligible_washes = self.retail_car_count_rinsed(start_date, end_date, location_key)
 
         # Get the number of new memberships sold
         new_memberships = self.new_memberships_sold(start_date, end_date, location_key)
 
+        #print(start_date, '|', new_memberships, '/', eligible_washes+new_memberships)
+
         # Avoid division by zero
-        if total_customers > 0:
-            conversion_rate = (new_memberships / total_customers)
+        if eligible_washes > 0:
+            conversion_rate = (new_memberships / (eligible_washes+new_memberships))
             return round(conversion_rate, 4)
         else:
             return 0.0
