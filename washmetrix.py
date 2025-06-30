@@ -904,7 +904,7 @@ class WashMetrixKPIs:
         #print(start_date, '|', new_memberships, '/', eligible_washes+new_memberships)
 
         # Avoid division by zero
-        if eligible_washes > 0:
+        if eligible_washes + new_memberships > 0:
             conversion_rate = (new_memberships / (eligible_washes+new_memberships))
             return round(conversion_rate, 4)
         else:

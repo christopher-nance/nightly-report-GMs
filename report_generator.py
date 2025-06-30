@@ -41,18 +41,18 @@ location_timezones = {
 }
 
 location_names = {
-    'Plainfield':       '269529698b913dfb25f26ceace416fac',
-    'Villa Park':       '827ccde4158d5b6917661c3dd369341f',
+    #'Plainfield':       '269529698b913dfb25f26ceace416fac',
+    #'Villa Park':       '827ccde4158d5b6917661c3dd369341f',
     'Burbank':          'da4f80608864892504784372113ba322',
-    'Carol Stream':     '46b724ec5bb89743f915bbe3ebf6b343',
-    'Des Plaines':      '011f3e8d4c5c304c4a956de1eb89e75b',
-    'Berwyn':           '88a2b3c8e7d1b7f1073d73de6b5a56f5',
+    #'Carol Stream':     '46b724ec5bb89743f915bbe3ebf6b343',
+    #'Des Plaines':      '011f3e8d4c5c304c4a956de1eb89e75b',
+    #'Berwyn':           '88a2b3c8e7d1b7f1073d73de6b5a56f5',
     'Joliet':           '39584e8cd2a8e19da2c9406faac47c2e',
-    'Naperville':       '220e853565de0c739bb3da29e512ed18',
-    'Evergreen Park':   '8a656bc1f58397ff7e026a3076411420',
-    'Fiesta':           '5203385e07d8589c1b5d07da8865e015',
-    'Centennial':       'cf2257e6113a6298f68113a16929cad8',
-    'Niles':            '959558c4617dd2911a33de89489ed6b1',
+    # 'Naperville':       '220e853565de0c739bb3da29e512ed18',
+    # 'Evergreen Park':   '8a656bc1f58397ff7e026a3076411420',
+    # 'Fiesta':           '5203385e07d8589c1b5d07da8865e015',
+    # 'Centennial':       'cf2257e6113a6298f68113a16929cad8',
+    # 'Niles':            '959558c4617dd2911a33de89489ed6b1',
 
 }
 
@@ -332,6 +332,17 @@ def process_location(location):
 
     report = generate_kpi_report(location_name, template_file_path)
 
+    # Save the report to an HTML file
+    output_file = f"reports/{location_name}/{location_name}_KPI_Report_{datetime.now().strftime('%Y-%m-%d')}.html"
+    logger.debug("Saving file to reports folder...")
+    # Ensure the 'reports' directory exists
+    os.makedirs(f'reports/{location_name}', exist_ok=True)
+
+    with open(output_file, 'w', encoding='utf-8') as file:
+        file.write(report)
+
+    logger.debug(f"Report saved to: {output_file}")
+
     def is_past_830pm(timezone_str):
         location_tz = pytz.timezone(timezone_str)
         current_time = datetime.now(location_tz)
@@ -382,16 +393,7 @@ def process_location(location):
     send_file_to_power_automate(report, power_automate_url, location)
         
 
-    # Save the report to an HTML file
-    output_file = f"reports/{location_name}/{location_name}_KPI_Report_{datetime.now().strftime('%Y-%m-%d')}.html"
-    logger.debug("Saving file to reports folder...")
-    # Ensure the 'reports' directory exists
-    os.makedirs(f'reports/{location_name}', exist_ok=True)
-
-    with open(output_file, 'w', encoding='utf-8') as file:
-        file.write(report)
-
-    logger.debug(f"Report saved to: {output_file}")
+    
 
 washmetrix_api.total_cars(start_date=datetime.today(), end_date=datetime.today(), location_key="269529698b913dfb25f26ceace416fac") # Init the logger for the API so log is clean for this application.
 
